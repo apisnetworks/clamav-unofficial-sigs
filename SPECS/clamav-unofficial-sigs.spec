@@ -10,7 +10,7 @@
 Name:           clamav-unofficial-sigs
 Version:        7.0.0
 Release:        1%{?dist}
-Summary:        Scripts to download unofficial clamav signatures 
+Summary:        Scripts to download unofficial clamav signatures
 Group:          Applications/System
 License:        BSD
 URL:            https://github.com/extremeshok/%{name}
@@ -18,6 +18,7 @@ Source0:        https://github.com/extremeshok/%{name}/archive/%{version}/%{name
 Source1:        clamav-unofficial-sigs.cron
 Source2:        clamav-unofficial-sigs.logrotate
 Source3:        clamav-unofficial-sigs.man8
+Source4:        os.centos-apnscp.conf
 BuildArch:      noarch
 BuildRequires:  bind-utils
 BuildRequires:  rsync
@@ -31,9 +32,9 @@ Requires(post): systemd-sysv
 
 %description
 This package contains scripts and configuration files
-that provide the capability to download, test, and 
-update the 3rd-party signature databases provide by 
-Sanesecurity, SecuriteInfo, MalwarePatrol, OITC, 
+that provide the capability to download, test, and
+update the 3rd-party signature databases provide by
+Sanesecurity, SecuriteInfo, MalwarePatrol, OITC,
 INetMsg and ScamNailer.
 
 %prep
@@ -45,9 +46,8 @@ sed -i -e '/ExecStart/ s^/usr/local/sbin^/usr/sbin^' systemd/clamav-unofficial-s
 cp %{SOURCE1} clamav-unofficial-sigs.cron
 cp %{SOURCE2} clamav-unofficial-sigs.logrotate
 cp %{SOURCE3} clamav-unofficial-sigs.man8
-%if 0%{?rhel} && 0%{?rhel} == 6
-sed -i -e '/create/ s/clamupdate/%{clamupdateuser}/g' clamav-unofficial-sigs.logrotate
-%endif
+cp %{SOURCE4} config/os/os.centos-apnscp.conf
+
 # Fix shebang
 sed -i -e 's^/usr/bin/env bash^/bin/bash^g' clamav-unofficial-sigs.sh
 sed -i -e 's^/usr/bin/bash^/bin/bash^g' clamav-unofficial-sigs.cron
@@ -61,7 +61,7 @@ sed -i -e '/^#pkg_mgr/ s/^#//;s/""/"dnf"/' config/master.conf
 sed -i -e '/ExecStart=/ s|/usr/local/sbin|%{_sbindir}|' systemd/clamav-unofficial-sigs.service
 # Disable yara rules
 sed -i -e '/^enable_yararules/ s/yes/no/' config/master.conf
-sed -i -e '/^clamd_restart_opt/ s/systemctl restart/systemctl try-restart/' config/os/os.centos7-atomic.conf
+sed -i -e '/^clamd_restart_opt/ s/systemctl restart/systemctl try-restart/' config/os/os.centos-apnscp.conf
 
 %install
 rm -rf %{buildroot}
@@ -75,11 +75,7 @@ install -d -p %{buildroot}%{_sysconfdir}/logrotate.d
 install -d -p %{buildroot}%{_mandir}/man8
 install -p -m0755 clamav-unofficial-sigs.sh %{buildroot}%{_sbindir}/clamav-unofficial-sigs.sh
 # config/os.centos7-atomic.conf file is for epel and fedora
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
-install -p -m0644 config/os/os.centos7-atomic.conf %{buildroot}%{_sysconfdir}/%{name}/os.conf
-%else
-install -p -m0644 config/os/os.centos6.conf %{buildroot}%{_sysconfdir}/%{name}/os.conf
-%endif
+install -p -m0644 config/os/os.centos-apnscp.conf %{buildroot}%{_sysconfdir}/%{name}/os.conf
 install -p -m0644 config/user.conf %{buildroot}%{_sysconfdir}/%{name}/user.conf
 install -p -m0644 config/master.conf %{buildroot}%{_sysconfdir}/%{name}/master.conf
 install -Dp -m 0644 systemd/clamav-unofficial-sigs.service %{buildroot}%{_unitdir}/clamav-unofficial-sigs.service
@@ -92,7 +88,7 @@ install -p -m0644 clamav-unofficial-sigs.man8 %{buildroot}%{_mandir}/man8/clamav
 rm -rf %{buildroot}
 
 %files
-%doc README.md 
+%doc README.md
 %license LICENSE
 %dir %{_sysconfdir}/%{name}
 %config %{_sysconfdir}/%{name}/os.conf
